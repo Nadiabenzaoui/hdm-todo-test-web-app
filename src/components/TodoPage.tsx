@@ -1,8 +1,7 @@
-/**
- * @todo YOU HAVE TO IMPLEMENT THE DELETE AND SAVE TASK ENDPOINT, A TASK CANNOT BE UPDATED IF THE TASK NAME DID NOT CHANGE, YOU'VE TO CONTROL THE BUTTON STATE ACCORDINGLY
+/* @todo YOU HAVE TO IMPLEMENT THE DELETE AND SAVE TASK ENDPOINT, A TASK CANNOT BE UPDATED IF THE TASK NAME DID NOT CHANGE, YOU'VE TO CONTROL THE BUTTON STATE ACCORDINGLY
  */
 import { Check, Delete } from '@mui/icons-material';
-import { Box, Button, Container, IconButton, TextField, Typography } from '@mui/material';
+import { Box, Button, Container, Icon, IconButton, TextField, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import useFetch from '../hooks/useFetch.ts';
 import { Task } from '../index';
@@ -44,10 +43,23 @@ const TodoPage = () => {
     }
   }
   };
+  const handleEdit = async (task: Task) => {
+    try {
+      const updatedTask: Task = {
+        ...task,
+        name: task.name,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await api.patch(`/tasks/${task.id}`, updatedTask);
+      await handleFetchTasks();
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
 
   const handleComplete = async (task: Task) => {
-    // try {/
-
     const updatedTask: Task = {
       ...task,
       completed: !task.completed,
@@ -74,9 +86,8 @@ const TodoPage = () => {
       <Box justifyContent="center" mt={5} flexDirection="column">
         {tasks.map((task) => (
           <Box key={task.id} display="flex" justifyContent="center" alignItems="center" mt={2} gap={1} width="100%">
-            <Typography
-              variant="body1"
-              style={{ textDecoration: task.completed ? 'tline-hrough' : 'none' }}
+            <Typography 
+            value={task.name} 
             >
               {task.name}
             </Typography>
@@ -87,9 +98,16 @@ const TodoPage = () => {
             >
               <Check />
             </IconButton>
+
+       
             <IconButton color="error" onClick={() => handleDelete(task.id)}>
               <Delete />
             </IconButton>
+            <IconButton color="error" onClick={() => handleEdit(task)}>
+
+            <Button variant="outlined">Edit</Button>
+            </IconButton>
+
           </Box>
         ))}
 
@@ -104,6 +122,8 @@ const TodoPage = () => {
             sx={{ maxWidth: 350 }}
           />
         </Box>
+  
+        
 
         <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
           <Button
