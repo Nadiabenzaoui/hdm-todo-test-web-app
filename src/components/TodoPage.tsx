@@ -10,22 +10,60 @@ import { Task } from '../index';
 const TodoPage = () => {
   const api = useFetch();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTaskName, setNewTaskName] = useState('');
 
   const handleFetchTasks = async () => setTasks(await api.get('/tasks'));
 
   const handleDelete = async (id: number) => {
     // @todo IMPLEMENT HERE : DELETE THE TASK & REFRESH ALL THE TASKS, DON'T FORGET TO ATTACH THE FUNCTION TO THE APPROPRIATE BUTTON
-  }
+    try {
+      await api.delete(`/tasks/${id}`);
+      await handleFetchTasks(); // Refresh tasks after deletion
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
 
   const handleSave = async () => {
-    // @todo IMPLEMENT HERE : SAVE THE TASK & REFRESH ALL THE TASKS, DON'T FORGET TO ATTACH THE FUNCTION TO THE APPROPRIATE BUTTON
+   // @todo IMPLEMENT HERE : SAVE THE TASK & REFRESH ALL THE TASKS, DON'T FORGET TO ATTACH THE FUNCTION TO THE APPROPRIATE BUTTON
+   if (newTaskName.trim() !== '') {
+    try {
+      const newTask: Task = {
+        id: 0, // Set id to 0 for new tasks
+        name: newTaskName,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        completed: false,
+      };
+
+      await api.post('/tasks', newTask);
+      setNewTaskName('');
+      await handleFetchTasks();
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
   }
+  };
+
+  const handleComplete = async (task: Task) => {
+    // try {/
+
+    const updatedTask: Task = {
+      ...task,
+      completed: !task.completed,
+    };
+
+    //
+    setTasks((prevTasks) =>
+    prevTasks.map((t) => (t.id === task.id ? updatedTask : t))
+  );
+  };
 
   useEffect(() => {
     (async () => {
       handleFetchTasks();
     })();
-  }, []);
+  }, []); 
 
   return (
     <Container>
@@ -34,28 +72,51 @@ const TodoPage = () => {
       </Box>
 
       <Box justifyContent="center" mt={5} flexDirection="column">
-        {
-          tasks.map((task) => (
-            <Box display="flex" justifyContent="center" alignItems="center" mt={2} gap={1} width="100%">
-              <TextField size="small" value={task.name} fullWidth sx={{ maxWidth: 350 }} />
-              <Box>
-                <IconButton color="success" disabled>
-                  <Check />
-                </IconButton>
-                <IconButton color="error" onClick={() => {}}>
-                  <Delete />
-                </IconButton>
-              </Box>
-            </Box>
-          ))
-        }
+        {tasks.map((task) => (
+          <Box key={task.id} display="flex" justifyContent="center" alignItems="center" mt={2} gap={1} width="100%">
+            <Typography
+              variant="body1"
+              style={{ textDecoration: task.completed ? 'tline-hrough' : 'none' }}
+            >
+              {task.name}
+            </Typography>
+ 
+            <IconButton
+              style={{ color: task.completed ? 'green' : 'gray' }} 
+              onClick={() => handleComplete(task)}
+            >
+              <Check />
+            </IconButton>
+            <IconButton color="error" onClick={() => handleDelete(task.id)}>
+              <Delete />
+            </IconButton>
+          </Box>
+        ))}
 
         <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
-          <Button variant="outlined" onClick={() => {}}>Ajouter une tâche</Button>
+          <TextField
+            label="Nouvelle tâche"
+            variant="outlined"
+            value={newTaskName}
+            onChange={(e) => setNewTaskName(e.target.value)}
+            fullWidth
+            size="small"
+            sx={{ maxWidth: 350 }}
+          />
+        </Box>
+
+        <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
+          <Button
+            variant="outlined"
+            onClick={handleSave}
+            disabled={newTaskName.trim() === ''}
+          >
+            Add Task
+          </Button>
         </Box>
       </Box>
     </Container>
   );
-}
+};
 
 export default TodoPage;
